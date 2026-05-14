@@ -1,3 +1,17 @@
+# Environment files
+.env
+backend/.env
+frontend/.env
+
+# Node modules
 node_modules/
-/env/
-backend/env/
+backend/node_modules/
+frontend/node_modules/
+
+# Build artifacts
+artifacts/
+cache/
+build-info/
+
+# Frontend build output
+frontend/dist/
