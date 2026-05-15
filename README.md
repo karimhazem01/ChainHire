@@ -114,7 +114,7 @@ Make sure you have the following installed before running the project:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/chainhire.git
+git clone https://github.com/karimhazem01/ChainHire.git
 cd chainhire
 ```
 
