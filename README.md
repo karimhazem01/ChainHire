@@ -353,7 +353,7 @@ View on Etherscan: [sepolia.etherscan.io/address/0xEA8CF05A1423cAEBC394016fAD794
 
 ## Video Demonstration
 
-📹 **[Watch the Full Demo on YouTube]([YOUR_YOUTUBE_LINK_HERE])**
+📹 **[Watch the Full Demo on YouTube]([https://www.youtube.com/watch?v=o28QV9cgGKU])**
 
 The video covers:
 - Overview of the ChainHire blockchain idea
