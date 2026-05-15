@@ -176,11 +176,22 @@ contract FreelanceEscrow {
     }
 
     /**
-     * @notice Client raises a dispute — full refund to client.
+     * @notice Client raises a dispute — locks funds and changes status to Disputed.
      * @param jobId The MongoDB job ID string
      */
     function raiseDispute(string memory jobId) external nonReentrant jobExists(jobId) onlyClient(jobId) onlyFunded(jobId) {
+        jobs[jobId].status = JobStatus.Disputed;
+        // Money stays in contract until resolved
+    }
+
+    /**
+     * @notice Freelancer accepts a dispute — full refund to client.
+     * @param jobId The MongoDB job ID string
+     */
+    function acceptDispute(string memory jobId) external nonReentrant jobExists(jobId) {
         Job storage job = jobs[jobId];
+        require(msg.sender == job.freelancer, "FreelanceEscrow: Only the freelancer can accept a dispute");
+        require(job.status == JobStatus.Disputed, "FreelanceEscrow: Job is not in Disputed state");
 
         uint256 refundAmount = job.amount;
         address clientAddr = job.client;

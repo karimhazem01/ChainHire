@@ -182,6 +182,19 @@
           "type": "string"
         }
       ],
+      "name": "acceptDispute",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "jobId",
+          "type": "string"
+        }
+      ],
       "name": "approveDelivery",
       "outputs": [],
       "stateMutability": "nonpayable",

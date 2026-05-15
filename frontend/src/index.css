@@ -2090,6 +2090,158 @@ input:focus, textarea:focus, select:focus {
  text-decoration: underline;
 }
 
+.security-page {
+  padding: 8rem 0 6rem;
+}
+
+.security-header {
+  max-width: 760px;
+  margin: 0 auto 3rem;
+}
+
+.security-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.security-card {
+  min-width: 0;
+  padding: 2rem;
+}
+
+.security-card h2 {
+  font-size: 1.25rem;
+  line-height: 1.25;
+  margin-bottom: 1.25rem;
+}
+
+.status-item {
+  display: grid;
+  grid-template-columns: minmax(8rem, auto) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.status-item .value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: 'IBM Plex Sans', monospace;
+  line-height: 1.5;
+}
+
+.security-list {
+  margin: 0;
+}
+
+.security-list li {
+  margin-bottom: 1rem;
+}
+
+.security-list li::before {
+  content: "";
+  left: 0.1rem;
+  top: 0.6rem;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-top: 2px solid var(--primary);
+  border-right: 2px solid var(--primary);
+  transform: rotate(45deg);
+}
+
+.security-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 1.5rem;
+}
+
+.security-action {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.disclaimer-box {
+  margin-top: 2rem;
+  padding: 2rem;
+  border-left: 4px solid #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.disclaimer-box h3 {
+  color: #fca5a5;
+  margin-bottom: 1rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 1.1rem;
+}
+
+.disclaimer-box p {
+  color: #fecaca;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.security-back-link {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+@media (max-width: 992px) {
+  .security-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .security-page {
+    padding: 6.5rem 0 4rem;
+  }
+
+  .security-header {
+    margin-bottom: 2rem;
+  }
+
+  .security-card {
+    padding: 1.5rem;
+  }
+
+  .status-item {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+
+  .status-item .value {
+    text-align: left;
+  }
+
+  .disclaimer-box {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .security-card {
+    padding: 1.25rem;
+  }
+
+  .security-action {
+    padding-inline: 0.9rem;
+  }
+}
+
 
 /* Logo Styles */
 .nav-logo {

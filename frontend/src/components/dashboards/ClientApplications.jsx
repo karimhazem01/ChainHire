@@ -115,12 +115,16 @@ const ClientApplications = () => {
           const signer = await provider.getSigner();
           const contract = await getContract(signer);
 
+          // Use the MongoDB string ID as the blockchain jobId
+          const onChainJobId = jobId; 
+
           const budgetInWei = ethers.parseEther(app.jobData.budget.toString());
           const deadlineTimestamp = Math.floor(new Date(app.jobData.deadline).getTime() / 1000);
 
-          console.log(`Funding job ${jobId} with ${app.jobData.budget} ETH...`);
+          console.log(`Funding job ${onChainJobId} with ${app.jobData.budget} ETH...`);
+          console.log(`Freelancer: ${freelancerWallet}, Deadline: ${deadlineTimestamp}`);
           
-          const tx = await contract.fundJob(jobId, freelancerWallet, deadlineTimestamp, {
+          const tx = await contract.fundJob(onChainJobId, freelancerWallet, deadlineTimestamp, {
             value: budgetInWei
           });
 
@@ -140,11 +144,22 @@ const ClientApplications = () => {
 
           toast.success("Application accepted and escrow funded successfully!");
         } catch (web3Err) {
-          console.error("Blockchain transaction failed:", web3Err);
+          console.error("Blockchain transaction failed detailed error:", web3Err);
           let msg = "Failed to fund escrow.";
-          if (web3Err.code === 'ACTION_REJECTED') msg = "Transaction rejected in MetaMask.";
-          else if (web3Err.message.includes("insufficient funds")) msg = "Insufficient ETH to fund the job.";
-          else if (web3Err.message.includes("Deadline must be in the future")) msg = "Job deadline must be in the future.";
+          
+          if (web3Err.code === 'ACTION_REJECTED') {
+            msg = "Transaction rejected in MetaMask.";
+          } else if (web3Err.message?.includes("insufficient funds")) {
+            msg = "Insufficient ETH to fund the job.";
+          } else if (web3Err.message?.includes("Deadline must be in the future")) {
+            msg = "Job deadline must be in the future.";
+          } else if (web3Err.message?.includes("Job already funded")) {
+            msg = "This job has already been funded on-chain.";
+          } else if (web3Err.data?.message) {
+            msg = `Blockchain Error: ${web3Err.data.message}`;
+          } else if (web3Err.reason) {
+            msg = `Blockchain Error: ${web3Err.reason}`;
+          }
           
           toast.error(msg);
           setTxLoading(null);

@@ -73,19 +73,42 @@ describe("FreelanceEscrow", function () {
       expect(job.status).to.equal(3); // Cancelled = 3
     });
 
-    it("Should refund client fully when dispute is raised", async function () {
+    it("Should lock funds when dispute is raised, then refund only after freelancer accepts", async function () {
       await escrow.connect(client).fundJob(JOB_ID, freelancer.address, deadline, { value: ONE_ETH });
 
       const clientBefore = await ethers.provider.getBalance(client.address);
-      const tx = await escrow.connect(client).raiseDispute(JOB_ID);
-      const receipt = await tx.wait();
-      const gasCost = receipt.gasUsed * tx.gasPrice;
-      const clientAfter = await ethers.provider.getBalance(client.address);
+      
+      // Client raises dispute
+      const tx1 = await escrow.connect(client).raiseDispute(JOB_ID);
+      await tx1.wait();
+      
+      const jobAfterDispute = await escrow.getJob(JOB_ID);
+      expect(jobAfterDispute.status).to.equal(4); // Disputed = 4
+      expect(jobAfterDispute.amount).to.equal(ONE_ETH); // Funds STILL LOCKED
 
-      expect(clientAfter + gasCost - clientBefore).to.equal(ONE_ETH);
+      const clientAfterDispute = await ethers.provider.getBalance(client.address);
+      // Verify no refund yet (ignoring gas for simplicity in this check, but balance shouldn't increase by ONE_ETH)
+      expect(clientAfterDispute).to.be.below(clientBefore); 
 
-      const job = await escrow.getJob(JOB_ID);
-      expect(job.status).to.equal(5); // Refunded = 5
+      // Freelancer accepts dispute
+      const tx2 = await escrow.connect(freelancer).acceptDispute(JOB_ID);
+      const receipt2 = await tx2.wait();
+      const clientAfterAccept = await ethers.provider.getBalance(client.address);
+
+      expect(clientAfterAccept).to.be.above(clientAfterDispute);
+      
+      const jobAfterAccept = await escrow.getJob(JOB_ID);
+      expect(jobAfterAccept.status).to.equal(5); // Refunded = 5
+      expect(jobAfterAccept.amount).to.equal(0);
+    });
+
+    it("Should reject non-freelancer trying to accept dispute", async function () {
+      await escrow.connect(client).fundJob(JOB_ID, freelancer.address, deadline, { value: ONE_ETH });
+      await escrow.connect(client).raiseDispute(JOB_ID);
+      
+      await expect(
+        escrow.connect(other).acceptDispute(JOB_ID)
+      ).to.be.revertedWith("FreelanceEscrow: Only the freelancer can accept a dispute");
     });
   });
 

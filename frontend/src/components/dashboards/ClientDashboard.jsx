@@ -24,42 +24,35 @@ const ClientDashboard = () => {
       const data = {};
       
       for (const job of jobs) {
-        // Fetch on-chain data for all jobs that are not yet Completed/Cancelled/Disputed
-        // This ensures we catch jobs that were funded but the DB hasn't synced yet.
-        if (job.status === 'Open' || job.status === 'Assigned' || job.status === 'Funded') {
-           try {
-             console.log(`Checking blockchain for job: ${job._id} (${job.title})...`);
-             const result = await contract.getJob(job._id);
-             const onChainStatus = Number(result[4]);
-             console.log(`Job ${job._id} on-chain status: ${onChainStatus}`);
-             
-             data[job._id] = {
-               client: result[0],
-               freelancer: result[1],
-               amount: ethers.formatEther(result[2]),
-               deadline: Number(result[3]),
-               status: onChainStatus // 0: Open, 1: Funded, 2: Completed, 3: Cancelled, 4: Disputed, 5: Refunded
-             };
+        // Fetch on-chain data for all jobs to keep status in sync
+        try {
+          const result = await contract.getJob(job._id);
+          const onChainStatus = Number(result[4]);
+          
+          data[job._id] = {
+            client: result[0],
+            freelancer: result[1],
+            amount: ethers.formatEther(result[2]),
+            deadline: Number(result[3]),
+            status: onChainStatus // 0: Open, 1: Funded, 2: Completed, 3: Cancelled, 4: Disputed, 5: Refunded
+          };
 
-             // Sync backend if it's lagging (On-chain says Funded, but DB says Open/Assigned)
-             if (onChainStatus === 1 && (job.status === 'Open' || job.status === 'Assigned')) {
-               console.log(`Syncing backend status for job ${job._id} to Funded...`);
-               await fetch(`http://localhost:5000/api/jobs/${job._id}/status`, {
-                 method: 'PATCH',
-                 headers: { 'Content-Type': 'application/json' },
-                 body: JSON.stringify({ status: 'Funded' })
-               });
-               // Refresh local state to show buttons immediately
-               setMyJobs(prev => prev.map(j => j._id === job._id ? { ...j, status: 'Funded' } : j));
-             }
-           } catch (e) {
-             console.log(`Job ${job._id} not found on contract yet or error:`, e.message);
-             // If getJob reverts, it likely means the job hasn't been funded yet (doesn't exist in contract)
-             // We can ignore this for 'Open' jobs.
-           }
+          // Sync backend if it's lagging (On-chain says Funded, but DB says Open/Assigned)
+          if (onChainStatus === 1 && (job.status === 'Open' || job.status === 'Assigned')) {
+            console.log(`Syncing backend status for job ${job._id} to Funded...`);
+            await fetch(`http://localhost:5000/api/jobs/${job._id}/status`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'Funded' })
+            });
+            // Refresh local state to show buttons immediately
+            setMyJobs(prev => prev.map(j => j._id === job._id ? { ...j, status: 'Funded' } : j));
+          }
+        } catch (e) {
+          // If getJob reverts, it likely means the job hasn't been funded yet
         }
       }
-      setOnChainData(prev => ({ ...prev, ...data }));
+      setOnChainData(data); // Replace old data to clear stale statuses
     } catch (err) {
       console.error("Error fetching on-chain data:", err);
     }
@@ -154,6 +147,7 @@ const ClientDashboard = () => {
       case 'completed': return { color: '#10b981', borderColor: '#10b981' };
       case 'cancelled': return { color: '#ef4444', borderColor: '#ef4444' };
       case 'disputed': return { color: '#f87171', borderColor: '#f87171' };
+      case 'refunded': return { color: '#f87171', borderColor: '#f87171', fontStyle: 'italic' };
       default: return {};
     }
   };
@@ -221,8 +215,12 @@ const ClientDashboard = () => {
                     <button className="btn-outline-subtle" onClick={() => setEditingJob(job)}>Edit</button>
                   )}
                   
-                  {/* Show actions if status is Funded (either in DB or on-chain) */}
-                  {(job.status === 'Funded' || onChainData[job._id]?.status === 1) && (
+                  {/* Show actions only if status is strictly Funded and not resolved/disputed */}
+                  {(job.status === 'Funded' || onChainData[job._id]?.status === 1) && 
+                   job.status !== 'Disputed' && 
+                   job.status !== 'Completed' && 
+                   job.status !== 'Cancelled' &&
+                   onChainData[job._id]?.status === 1 && (
                     <>
                       <button 
                         className="btn-glow" 
@@ -249,6 +247,12 @@ const ClientDashboard = () => {
                         Dispute
                       </button>
                     </>
+                  )}
+                  
+                  {job.status === 'Disputed' && (
+                    <div style={{ fontSize: '0.85rem', color: '#f87171', fontWeight: 500, padding: '0.4rem' }}>
+                      ⚖️ Dispute Pending (Awaiting Freelancer)
+                    </div>
                   )}
                 </div>
               </div>

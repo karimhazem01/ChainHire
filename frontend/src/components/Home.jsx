@@ -178,8 +178,8 @@ const Home = () => {
               <div className="feature-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
               </div>
-              <h3>0% Platform Tax</h3>
-              <p>Take home what you earn. We minimize fees by eliminating the middleman entirely.</p>
+              <h3>1% Platform Fee</h3>
+              <p>Keep more of what you earn with a low 1% fee only when a deal is successfully completed.</p>
             </div>
           </div>
         </div>
@@ -270,8 +270,8 @@ const Home = () => {
               <div className="stat-label">Total Paid Out</div>
             </div>
             <div className="stat-item">
-              <div className="stat-value">0%</div>
-              <div className="stat-label">Platform Fees</div>
+              <div className="stat-value">1%</div>
+              <div className="stat-label">Platform Fee</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">Instant</div>

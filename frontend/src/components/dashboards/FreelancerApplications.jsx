@@ -3,12 +3,15 @@ import { useAuth } from '../../hooks/useAuth';
 import ChatModal from '../messaging/ChatModal';
 import { io } from 'socket.io-client';
 import { getApplications, getJobs, getUnreadCount } from '../../services/api';
+import { getContract, getWeb3Provider } from '../../utils/web3';
+import { toast } from 'react-hot-toast';
 
 const FreelancerApplications = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isWrongNetwork } = useAuth();
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [txLoading, setTxLoading] = useState(null);
   
   // Chat state
   const [chatConfig, setChatConfig] = useState({
@@ -52,6 +55,39 @@ const FreelancerApplications = () => {
       setIsLoading(false);
     }
   }, [freelancerId, applications.length]);
+
+  const handleAcceptDispute = async (jobId) => {
+    if (isWrongNetwork) {
+      toast.error("Please switch to Sepolia Testnet.");
+      return;
+    }
+
+    setTxLoading(jobId);
+    try {
+      const provider = getWeb3Provider();
+      const signer = await provider.getSigner();
+      const contract = await getContract(signer);
+
+      console.log(`Accepting dispute for job ${jobId}...`);
+      const tx = await contract.acceptDispute(jobId);
+      await tx.wait();
+
+      // Update backend
+      await fetch(`http://localhost:5000/api/jobs/${jobId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Refunded' })
+      });
+
+      toast.success("Dispute accepted and funds refunded to client.");
+      loadData();
+    } catch (err) {
+      console.error("Failed to accept dispute:", err);
+      toast.error(`Action failed: ${err.message}`);
+    } finally {
+      setTxLoading(null);
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -160,6 +196,18 @@ const FreelancerApplications = () => {
                 <span className="text-muted" style={{ fontSize: '0.8rem' }}>
                   Job Status: <span className={`status-badge ${app.jobStatus?.toLowerCase()}`}>{app.jobStatus}</span>
                 </span>
+
+                {app.jobStatus === 'Disputed' && (
+                  <button 
+                    className="btn-glow" 
+                    style={{ padding: '0.3rem 0.8rem', fontSize: '0.75rem', background: '#f87171' }}
+                    onClick={() => handleAcceptDispute(app.jobId?._id || app.jobId)}
+                    disabled={txLoading === (app.jobId?._id || app.jobId)}
+                  >
+                    {txLoading === (app.jobId?._id || app.jobId) ? 'Refunding...' : 'Accept Dispute & Refund'}
+                  </button>
+                )}
+
                 {app.createdAt && (
                   <span className="text-muted" style={{ fontSize: '0.8rem' }}>
                     Applied: {new Date(app.createdAt).toLocaleDateString()}
